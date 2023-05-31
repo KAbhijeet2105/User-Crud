@@ -22,24 +22,36 @@ export class UsersController {
   @Get()
   async getUsers() {
     const users = await this.userService.findUsers();
+    users.forEach((user) => {
+            delete user.password;
+    }, err => {});
     return users;
   }
 
   @Get(':id')
   async getUserByid(@Param('id', ParseIntPipe) id: number) {
     const user = await this.userService.findUserById(id);
+    delete user.password;//test
     return user;
   }
 
   @Post() //registration user
   createUser(@Body() createUserDto: CreateUserDto) {
-    return this.userService.createUser(createUserDto);
+
+    const user = this.userService.createUser(createUserDto);
+    if (user) {
+        return { message: 'User created successfully', user };
+      } else {
+        return { message: 'User creation failed! ' };
+      }
   }
 
   //login user
   @Post('login')
   async login(@Body() loginUserDto: LoginUserDto) {
     const user = await this.userService.findByUsernameAndPassword(loginUserDto);
+    //const user = await this.userService. findByUsername(loginUserDto.username);
+   
     if (user) {
       return { message: 'Login successful', user };
     } else {
@@ -47,7 +59,7 @@ export class UsersController {
     }
   }
 
-  @Put()
+  @Put(':id')
   async updateUserById(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,

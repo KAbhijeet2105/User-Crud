@@ -5,7 +5,7 @@ export class User {
   @PrimaryGeneratedColumn({type:'bigint'}) // similar primary key in sql
   id: number;
 
-  @Column()
+  @Column({unique:true})
   username: string;
 
   @Column()
