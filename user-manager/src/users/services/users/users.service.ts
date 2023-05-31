@@ -34,10 +34,9 @@ export class UsersService {
 
   async updateUser(id: number, updateUserDetails: UpdateUserParams) {
 
-    if(updateUserDetails.password !== "" || updateUserDetails.password !== undefined || updateUserDetails.password.length > 0) {
+   
     const hashedPassword = await hashPassword(updateUserDetails.password);
     updateUserDetails.password = hashedPassword;
-    }
     
     return this.userRepository.update({ id }, { ...updateUserDetails });
   }
