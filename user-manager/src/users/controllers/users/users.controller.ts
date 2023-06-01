@@ -7,11 +7,16 @@ import {
   ParseIntPipe,
   Post,
   Put,
+  Req,
+  Res,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { LoginUserDto } from 'src/users/dtos/LoginUser.dto';
 import { UpdateUserDto } from 'src/users/dtos/UpdateUser.dto';
 import { CreateUserDto } from 'src/users/dtos/createuser.dto';
 import { UsersService } from 'src/users/services/users/users.service';
+import { Request, Response } from 'express';
 
 //set up the routes, check if any parameters passed in routes etc.
 
@@ -22,51 +27,78 @@ export class UsersController {
   @Get()
   async getUsers() {
     const users = await this.userService.findUsers();
-    users.forEach((user) => {
-            delete user.password;
-    }, err => {});
+    users.forEach(
+      (user) => {
+        delete user.password;
+      },
+      (err) => {},
+    );
     return users;
   }
 
+  //get user by id
   @Get(':id')
   async getUserByid(@Param('id', ParseIntPipe) id: number) {
     const user = await this.userService.findUserById(id);
-    delete user.password;//test
+    if (!user) return { message: 'Error user not found!' };
+
+    delete user.password; //test
     return user;
   }
 
   @Post() //registration user
-  createUser(@Body() createUserDto: CreateUserDto) {
-
+  @UsePipes(ValidationPipe)
+  createUser(@Body() createUserDto: CreateUserDto,
+  @Req() req: Request,
+  @Res() res: Response,
+  ) {
     const user = this.userService.createUser(createUserDto);
+   
     if (user) {
-        return { message: 'User created successfully', user };
+        res.status(201).send({ message: 'User created successfully!' });
       } else {
-        return { message: 'User creation failed! ' };
+        res.status(400).send({ message: 'User creation failed! ' });
       }
   }
 
   //login user
   @Post('login')
-  async login(@Body() loginUserDto: LoginUserDto) {
+  @UsePipes(ValidationPipe)
+  async login(
+    @Body() loginUserDto: LoginUserDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     const user = await this.userService.findByUsernameAndPassword(loginUserDto);
     //const user = await this.userService. findByUsername(loginUserDto.username);
-   
+
     if (user) {
-      return { message: 'Login successful', user };
+        delete user.password;
+      res.status(201).send({ message: 'Login successfull', user });
     } else {
-      return { message: 'Login failed! Invalid credentials' };
+      res.status(400).send({ message: 'Login failed! Please check your login credentials !' });
     }
   }
 
+  //update user credentials
   @Put(':id')
+  @UsePipes(ValidationPipe)
   async updateUserById(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
+    @Req() req: Request,
+    @Res() res: Response,
   ) {
-    await this.userService.updateUser(id, updateUserDto);
+    const usr = await this.userService.updateUser(id, updateUserDto);
+
+    if (usr) {
+        res.status(201).send({ message: 'User updated successfully'});
+      } else {
+        res.status(400).send({ message: 'Update failed! ' });
+      }
+
+    //return usr;
   }
-  
 
   @Delete(':id')
   async deleteById(@Param('id', ParseIntPipe) id: number) {

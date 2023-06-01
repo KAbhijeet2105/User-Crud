@@ -33,11 +33,9 @@ export class UsersService {
   }
 
   async updateUser(id: number, updateUserDetails: UpdateUserParams) {
-
-   
     const hashedPassword = await hashPassword(updateUserDetails.password);
     updateUserDetails.password = hashedPassword;
-    
+
     return this.userRepository.update({ id }, { ...updateUserDetails });
   }
 
@@ -61,21 +59,26 @@ export class UsersService {
 */
 
   async findByUsernameAndPassword(loginUserDetails: LoginUserParams) {
-    const user = await this.userRepository.findOne({
+  
+    let user;
+    let isMatch;
+    try{
+     user = await this.userRepository.findOne({
       where: { username: loginUserDetails.username },
     });
-    /*if (!user) {
-      throw new Error('Invalid username');
-    }*/
 
-    const isMatch = await comparePasswords(
-      loginUserDetails.password,
-      user.password,
-    );
-    /* if (!isMatch) {
-      throw new Error('Invalid password');
+    if(user)
+    { 
+         isMatch = await comparePasswords(
+        loginUserDetails.password,
+        user.password,
+      );
     }
-    */
+   
+    }
+    catch (err) {
+        console.log(err);
+    }
 
     return user;
   }
